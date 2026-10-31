@@ -6,7 +6,7 @@ MAP.json maps font names to files: {"SimSun": {"file": "simsun.ttc", "path": "/d
 A map of the form {"*": {"system": true}} keeps every Word family name and lets the
 compile host resolve installed fonts; it does not substitute families.
 """
-import argparse,json,re,sys,zipfile,collections
+import argparse,json,math,re,sys,zipfile,collections
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
@@ -1294,11 +1294,63 @@ class Converter:
             if i is not None and i+1<len(self.section_list):
                 res+=self.section_break(self.section_list[i+1]); self.sect_i=i+1
         return res
+    def grid_line_spacing(self,p,style):
+        """Exact spacing for a Word lines-only grid without an explicit w:line.
+
+        Word snaps such a line to the next whole grid cell. docxlike's live
+        font metrics can disagree with that grid, so write the cell count as
+        an exact line spacing and disable the grid snap for this paragraph.
+        """
+        if not self.section_list: return None
+        sect_i=getattr(self,'sect_i',0)
+        sect=self.section_list[sect_i] if sect_i<len(self.section_list) else self.section_list[0]
+        g=sect.find(q('docGrid'))
+        if g is None or g.get(q('type')) not in ('lines','default'): return None
+        pitch=whole(g.get(q('linePitch')) or 0)/20
+        if pitch<=0: return None
+        spacing=p.find(f'{q("pPr")}/{q("spacing")}')
+        if spacing is not None and spacing.get(q('line')) is not None: return None
+        snap=p.find(f'{q("pPr")}/{q("snapToGrid")}')
+        if snap is not None:
+            if not on(snap): return None
+        else:
+            sid=style or self.default_par_style
+            while sid:
+                st=self.styles_by_id.get(sid)
+                if st is None: break
+                se=st.find(f'{q("pPr")}/{q("snapToGrid")}')
+                if se is not None:
+                    if not on(se): return None
+                    break
+                sid=val(st.find(q('basedOn')))
+        sizes=[]
+        for sz in p.findall(f'.//{q("r")}/{q("rPr")}/{q("sz")}'):
+            sizes.append(whole(val(sz))/2)
+        mark=p.find(f'{q("pPr")}/{q("rPr")}/{q("sz")}')
+        if mark is not None: sizes.append(whole(val(mark))/2)
+        sid=style or self.default_par_style
+        while sid and not sizes:
+            st=self.styles_by_id.get(sid)
+            if st is None: break
+            se=st.find(f'{q("rPr")}/{q("sz")}')
+            if se is not None:
+                sizes.append(whole(val(se))/2); break
+            sid=val(st.find(q('basedOn')))
+        if not sizes: sizes.append(self.normal_size())
+        cells=max(1,math.ceil(max(sizes)*1.3/pitch-1e-9))
+        return cells*pitch
+
     def paragraph1(self,p,story='body'):
         self.par_num=None; self.story=story
         par,other,style=self.ppr(p.find(q('pPr')))
         # a header paragraph without pStyle is Normal in Word; docxlike would use Header there
         if story=='headfoot' and not style: style=self.default_par_style
+        if story=='body':
+            grid_spacing=self.grid_line_spacing(p,style)
+            if grid_spacing is not None:
+                par=[x for x in par if not x.startswith('snap-to-grid-when-document-grid-is-defined=')]
+                par.append(f'spacing={{line-spacing=exactly,at={grid_spacing:g}bp}}')
+                par.append('snap-to-grid-when-document-grid-is-defined=false')
         if self.par_num:
             nid,lvl=self.par_num
             if nid in (None,'0'): other.append('numbering=none')

@@ -25,6 +25,10 @@ const samples = [
     join(docxlike, "build/multilingual-validation-v24/build/multilingual-targeted/floating/inputs/word-float-11-top-bottom.docx"),
   ],
   ["real-document", "/Users/wujunhao/emt-fpe/emt/实验设计与思考.docx"],
+  [
+    "real-table",
+    "/Users/wujunhao/emt-fpe/emt/A Graph Neural Network and Probabilistic Framework for Modeling EMT Dynamics in Single.docx",
+  ],
 ];
 
 const pyodide = await loadPyodide({ indexURL: join(root, "node_modules", "pyodide") + "/" });
@@ -84,6 +88,18 @@ json.dumps(result, ensure_ascii=False)
     });
   }
   const pdf = await stat(join(main, "main.pdf"));
+  if (name === "real-document" || name === "real-table") {
+    const pages = Number(
+      execFileSync(nativePython, ["-c", "import pymupdf,sys; print(len(pymupdf.open(sys.argv[1])))", join(main, "main.pdf")], {
+        encoding: "utf8",
+      }).trim(),
+    );
+    const app = execFileSync("unzip", ["-p", source, "docProps/app.xml"], { encoding: "utf8" });
+    const expected = Number(/<Pages>(\d+)<\/Pages>/.exec(app)?.[1] || 0);
+    if (!expected) throw new Error(`${name} has no Word page-count metadata`);
+    if (pages !== expected) throw new Error(`real document page count ${pages} != Word ${expected}`);
+    console.log(`PASS real document page count: ${pages} == Word ${expected}`);
+  }
   console.log(
     `PASS ${name}: ${pdf.size} bytes PDF, ${report.report_total} report items, ` +
       `${report.media_files} media files, fonts=${report.fonts_used.join(", ") || "-"}`,

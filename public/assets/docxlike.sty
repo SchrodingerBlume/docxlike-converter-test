@@ -14032,6 +14032,8 @@ end
       { \tex_vrule:D height \c_zero_dim width \c_zero_dim depth \l_tmpa_dim }
     \skip_horizontal:N \l_tmpa_skip
   }
+\NewExpandableDocumentCommand \docxrow { m }
+  { \noalign { \__docxlike_keys_set:nn { docxlike / table-properties / next-row } {#1} } }
 \clist_map_inline:nn { tabular , tabular* , tabularx , tabulary , longtable , xltabular }
   {
     \hook_gput_code:nnn { env / #1 / begin } { docxlike-table } { \__docxlike_table_begin: }

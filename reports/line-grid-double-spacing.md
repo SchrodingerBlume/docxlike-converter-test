@@ -170,3 +170,28 @@ SimSun:     H=14.08bp，一个网格（15.6bp）
 ## 结论
 
 转换器把 Word 的网格参数正确传给了 docxlike；当前 docxlike 把 15.6bp 网格排成了 31.2bp 行距。这是核心排版缺陷，需要在 docxlike 行盒/网格层修复，不能在转换器里覆盖。
+
+
+## 转换器侧处理（已提交）
+
+2026-10-31，`tools/docx2docxlike.py` 增加 `grid_line_spacing()`：
+
+- 仅当节使用 `docGrid type=lines`、段落没有显式 `w:line`、且段落/样式未关闭 `snapToGrid` 时生效。
+- 按段落最大字号计算 Word 网格单元数：
+  `cells = max(1, ceil(1.3 * fontSize / pitch))`。
+- 输出 `line-spacing=exactly, at=cells*pitch`，并写
+  `snap-to-grid-when-document-grid-is-defined=false`，避免 docxlike
+  再按字体实测行高取整一次。
+- 显式行距、关闭网格、页眉页脚和表格单元格不套用这条规则。
+
+验证：
+
+- `实验设计与思考.docx`：转换后 **4 页**，与 Word `docProps/app.xml` 的
+  `Pages=4` 一致；正文基线间距 **15.6bp**，不再是 31.2bp。
+- `A Graph Neural Network...docx`：修复 `\docxrow` 后 **5 页**，与 Word `Pages=5` 一致。
+- 1732 项 Word 字体控制：通过数保持 1223，零回退。
+- 616 项语料与 CJK 控制仍需在新运行文件上重跑。
+- 网页转换器 E2E 已把“真实文档页数必须等于 Word `Pages`”写成断言。
+
+核心 docxlike 的原始网格缺陷仍保留在 `linebox()` 中；本次不修改它，转换器用
+Word 网格单元显式写入精确行距来保证当前在线产品的输出与 Word 页数一致。
