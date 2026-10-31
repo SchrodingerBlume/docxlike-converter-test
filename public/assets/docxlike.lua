@@ -157,7 +157,8 @@ function M.factors(face)
   else
     total, ascent = a + d + gap, a + gap
   end
-  return { natural = total / face.units, ascent = ascent / face.units }
+  return { natural = total / face.units, ascent = ascent / face.units,
+           math = face.math }
 end
 
 local font_factors, math_factors, font_faces, font_paths, file_faces = {}, {}, {}, {}, {}
@@ -4108,8 +4109,14 @@ local function linebox(box, ctx, strut_h, strut_d)
       h, a = ctx.natpara, ctx.asc_para
     else
       local metrics = docxlike and docxlike.metrics and docxlike.metrics.for_font(g.font)
-      if metrics then h, a = metrics.natural * sz, metrics.ascent * sz
-      elseif is_jfont(g.font) then h, a = ctx.nat_cjk * sz, ctx.asc_cjk * sz
+      if metrics and metrics.math then
+        
+        
+        h, a = metrics.natural * sz, metrics.ascent * sz
+      elseif is_wide(g.char) or is_jfont(g.font) then
+        
+        
+        h, a = ctx.nat_cjk * sz, ctx.asc_cjk * sz
       else h, a = ctx.nat_latin * sz, ctx.asc_latin * sz end
     end
     

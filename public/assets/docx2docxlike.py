@@ -980,13 +980,24 @@ class Converter:
 
     SPECIAL={'\\':r'\textbackslash{}','{':r'\{','}':r'\}','$':r'\$','&':r'\&','#':r'\#','^':r'\^{}','_':r'\_','%':r'\%','~':r'\textasciitilde{}'}
     SYMBOL_FONTS={'Symbol','Wingdings','Wingdings 2','Wingdings 3','Webdings','MT Extra','Marlett'}
+    SUBSCRIPT='₀₁₂₃₄₅₆₇₈₉'
+    SUPERSCRIPT='⁰¹²³⁴⁵⁶⁷⁸⁹'
     def text(self,s):
-        out=[]; prev_space=True
-        for ch in s:
+        out=[]; prev_space=True; i=0
+        while i<len(s):
+            ch=s[i]
+            table=self.SUBSCRIPT if ch in self.SUBSCRIPT else self.SUPERSCRIPT if ch in self.SUPERSCRIPT else None
+            if table is not None:
+                j=i; digits=''
+                while j<len(s) and s[j] in table:
+                    digits+=str(table.index(s[j])); j+=1
+                out.append(('\\textsubscript{' if table is self.SUBSCRIPT else '\\textsuperscript{')+digits+'}')
+                i=j; prev_space=False; continue
             if ch==' ':
                 out.append('\\ ' if prev_space else ' '); prev_space=True
             else:
                 out.append(self.SPECIAL.get(ch,ch)); prev_space=False
+            i+=1
         return ''.join(out)
     @staticmethod
     def link(anchor,url,inner):
@@ -1294,6 +1305,10 @@ class Converter:
             if i is not None and i+1<len(self.section_list):
                 res+=self.section_break(self.section_list[i+1]); self.sect_i=i+1
         return res
+    def default_tab_stop(self):
+        e=self.settings.find(q('defaultTabStop')) if self.settings is not None else None
+        return whole(val(e))/20 if e is not None else 21
+
     def grid_line_spacing(self,p,style):
         """Exact spacing for a Word lines-only grid without an explicit w:line.
 
@@ -1359,6 +1374,14 @@ class Converter:
                 other.append('multilevel-list={'+(f'list-library={self.list_name(nid)},' if self.style_lists.get(style,(None,))[0]!=nid else '')+f'change-list-level=level-{lvl+1}'+'}')
         self.display_math=False
         content=self.joined+self.runs(p); self.joined=''
+        # Word uses tab stops in body prose too; docxlike's tab path sets one
+        # line only. Turn leading default tabs into a fixed indent so the
+        # paragraph still wraps. Custom tab stops keep their normal handling.
+        if story=='body' and p.find(f'{q("pPr")}/{q("tabs")}') is None:
+            lead=re.match(r'^(?:\\docxinsert\[tab\]\{\})+',content)
+            if lead:
+                count=lead.group(0).count('\\docxinsert[tab]{}')
+                content=f'\\hspace*{{{count*self.default_tab_stop():g}bp}}'+content[lead.end():]
         # nothing after a page break: the paragraph mark takes no line on the new page
         for pb in (self.PAGE_BREAK.strip(),self.PAGE_BREAK.replace(r'\newline ',r'\break ').strip()):
             if content.rstrip().endswith(pb):

@@ -2,13 +2,13 @@
   "docxlike": "/Users/wujunhao/latex-docxlike",
   "runtime_sha256": {
     "docxlike.sty": "8511b6454d3b7dbaeb42c5f76ad6740f61a02b814a15aa54f617428978a463a4",
-    "docxlike.lua": "e0cd39c9df6637239632bce48cf65d33fb20f6f67a69d3c66d1ea0ed58bf6c4b"
+    "docxlike.lua": "bf465d0815e3616e06e343132cb2eb02a222b5e995a62677091a29451b73c077"
   },
   "distributed_sha256": {
     "docxlike.sty": "1768ad7f88e72089095b053db632a1be710cb4c69e31042abfc71c9f1c25f81c",
-    "docxlike.lua": "3e306805134f516a0e20a6ca57d9f9478d15cf7d7051d19a0377c45883712963"
+    "docxlike.lua": "6348b0ddb447038a6e2c1d56e282582467d43f9eb139a2166925f0d7b611f634"
   },
-  "converter_sha256": "502cefa38cbb3f05630a4881a3e2fbdacb83ca4597db748bc3897e7761782f48",
+  "converter_sha256": "9e9f3121f862dd03ec1f9c279f4fe6b2d056b9d95160c2752f2ae9731b468eeb",
   "font_maps": {
     "system": "original Word family names (host fonts required)",
     "texlive": "37 TeX Live substitute families"
