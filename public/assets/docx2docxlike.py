@@ -984,6 +984,7 @@ class Converter:
     SUPERSCRIPT='⁰¹²³⁴⁵⁶⁷⁸⁹'
     def text(self,s):
         out=[]; prev_space=True; i=0
+        url=bool(re.search(r'(https?://|ftp://|www\.|//[A-Za-z0-9]|%20|#:~:text=)',s))
         while i<len(s):
             ch=s[i]
             table=self.SUBSCRIPT if ch in self.SUBSCRIPT else self.SUPERSCRIPT if ch in self.SUPERSCRIPT else None
@@ -997,6 +998,7 @@ class Converter:
                 out.append('\\ ' if prev_space else ' '); prev_space=True
             else:
                 out.append(self.SPECIAL.get(ch,ch)); prev_space=False
+                if url and ch in '/%#:=&?;,_~.-': out.append('\\allowbreak{}')
             i+=1
         return ''.join(out)
     @staticmethod
