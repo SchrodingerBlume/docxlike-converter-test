@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>docxlike 在线转换 · Word 文档转 LaTeX</title>
+    <meta name="description" content="在浏览器内把 Word DOCX 转换为 docxlike LaTeX 工程，下载 zip 后可直接在 Overleaf 或本地 LuaLaTeX 编译。文件不会上传。" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231d4ed8'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='18' fill='white' text-anchor='middle'%3Ed%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <h1>docxlike 在线转换</h1>
+        <p class="lead">
+          把 Word 文档转换成以最新版 <strong>docxlike</strong> 排版的 LaTeX 工程。
+          转换在浏览器本地完成，文件不会上传到服务器。
+        </p>
+        <p class="badge-line">
+          <span class="badge">浏览器内 WASM 转换</span>
+          <span class="badge">ZIP 内含运行文件</span>
+          <span class="badge">可选 TeX Live 替代字体</span>
+        </p>
+      </header>
+
+      <section class="card">
+        <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="选择或拖入 DOCX 文件">
+          <div class="dropzone-inner">
+            <p class="drop-title">拖入 .docx 文件</p>
+            <p class="drop-sub">或点击选择文件</p>
+            <p class="drop-note">仅支持 DOCX。旧版 .doc 请先在 Word 中另存为 .docx。</p>
+          </div>
+          <input id="file" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden />
+        </div>
+
+        <div id="fileinfo" class="fileinfo hidden">
+          <div>
+            <p id="filename" class="filename"></p>
+            <p id="filesize" class="filesize"></p>
+          </div>
+          <button id="clear" class="link-button" type="button">移除</button>
+        </div>
+
+        <fieldset id="fontmode" class="fontmode">
+          <legend>字体处理</legend>
+          <label>
+            <input type="radio" name="fontmode" value="system" checked />
+            <span>
+              <strong>保留 Word 原字体</strong>
+              <small>main.tex 写 SimSun、Times New Roman 等原名；编译环境必须安装这些字体。优先保真。</small>
+            </span>
+          </label>
+          <label>
+            <input type="radio" name="fontmode" value="texlive" />
+            <span>
+              <strong>TeX Live 替代字体</strong>
+              <small>宋体 → FandolSong，Times New Roman → TeX Gyre Termes 等；Overleaf 无需上传字体，但字形有差别。</small>
+            </span>
+          </label>
+        </fieldset>
+
+        <div class="actions">
+          <button id="convert" class="primary" type="button" disabled>开始转换</button>
+          <span id="hint" class="hint">首次转换需要加载约 12 MB 的转换引擎。</span>
+        </div>
+
+        <ol id="progress" class="progress hidden">
+          <li data-stage="engine">加载转换引擎</li>
+          <li data-stage="assets">读取 docxlike 运行文件</li>
+          <li data-stage="parse">解析 DOCX 并生成 LaTeX</li>
+          <li data-stage="package">打包 ZIP</li>
+        </ol>
+
+        <div id="error" class="error hidden" role="alert"></div>
+
+        <div id="result" class="result hidden">
+          <h2>转换完成</h2>
+          <p id="summary" class="summary"></p>
+          <a id="download" class="primary download" href="#" download>下载 ZIP</a>
+          <p class="result-note">
+            解压后得到 <code>main.tex</code>、图片目录和 <code>docxlike.sty</code>、<code>docxlike.lua</code>。
+            在 Overleaf 中上传整个文件夹，并把编译器设为 <strong>LuaLaTeX</strong>。
+          </p>
+          <div id="fontmode-warning" class="notice hidden"></div>
+          <div id="unmapped" class="notice hidden"></div>
+          <details id="report-box" class="report hidden">
+            <summary>转换报告（降级、占位与编程路径提示）</summary>
+            <ul id="report"></ul>
+          </details>
+        </div>
+      </section>
+
+      <section class="notes">
+        <h2>说明</h2>
+        <ul>
+          <li><strong>字体：</strong>默认保留 Word 里的原字体名，不做替换；本机编译需要安装这些字体。若要直接在 Overleaf 编译，请选择“TeX Live 替代字体”，这时会把常用字体映射到 TeX Live 自带字体，字形细节会有差别。</li>
+          <li><strong>保真度：</strong>转换以版式对齐为目标，保留段落、字体、间距、表格、图片、脚注、域和公式等的可见内容。转换器不能表达的对象会列在“转换报告”中，并以占位或降级方式处理；“编程路径”条目表示改用底层接口写入，内容仍然保留。</li>
+          <li><strong>隐私：</strong>文件只在当前浏览器的 WASM 沙箱内解析，不发送到任何服务器。</li>
+          <li><strong>限制：</strong>不支持旧版二进制 .doc；不解析文档内容语义；不替代人工检查分页与断行。</li>
+        </ul>
+      </section>
+
+      <footer class="footer">
+        <p>
+          运行时 docxlike <span id="runtime-version">0.1.0</span>
+          <span id="runtime-hash" class="mono"></span>
+        </p>
+        <p>作者：吴俊豪 &lt;andrew.junhao.wu@gmail.com&gt; · LPPL 1.3c 或更新版本</p>
+      </footer>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

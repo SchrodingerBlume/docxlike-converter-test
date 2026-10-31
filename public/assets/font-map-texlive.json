@@ -1,0 +1,245 @@
+{
+  "Times New Roman": {
+    "file": "texgyretermes-regular.otf",
+    "path": "",
+    "asian": false,
+    "bold": "texgyretermes-bold.otf",
+    "italic": "texgyretermes-italic.otf",
+    "bolditalic": "texgyretermes-bolditalic.otf"
+  },
+  "Times": {
+    "file": "texgyretermes-regular.otf",
+    "path": "",
+    "asian": false,
+    "bold": "texgyretermes-bold.otf",
+    "italic": "texgyretermes-italic.otf",
+    "bolditalic": "texgyretermes-bolditalic.otf"
+  },
+  "Cambria": {
+    "file": "texgyretermes-regular.otf",
+    "path": "",
+    "asian": false,
+    "bold": "texgyretermes-bold.otf",
+    "italic": "texgyretermes-italic.otf",
+    "bolditalic": "texgyretermes-bolditalic.otf"
+  },
+  "Georgia": {
+    "file": "texgyretermes-regular.otf",
+    "path": "",
+    "asian": false,
+    "bold": "texgyretermes-bold.otf",
+    "italic": "texgyretermes-italic.otf",
+    "bolditalic": "texgyretermes-bolditalic.otf"
+  },
+  "Arial": {
+    "file": "texgyreheros-regular.otf",
+    "path": "",
+    "asian": false,
+    "bold": "texgyreheros-bold.otf",
+    "italic": "texgyreheros-italic.otf",
+    "bolditalic": "texgyreheros-bolditalic.otf"
+  },
+  "Helvetica": {
+    "file": "texgyreheros-regular.otf",
+    "path": "",
+    "asian": false,
+    "bold": "texgyreheros-bold.otf",
+    "italic": "texgyreheros-italic.otf",
+    "bolditalic": "texgyreheros-bolditalic.otf"
+  },
+  "Calibri": {
+    "file": "texgyreheros-regular.otf",
+    "path": "",
+    "asian": false,
+    "bold": "texgyreheros-bold.otf",
+    "italic": "texgyreheros-italic.otf",
+    "bolditalic": "texgyreheros-bolditalic.otf"
+  },
+  "Segoe UI": {
+    "file": "texgyreheros-regular.otf",
+    "path": "",
+    "asian": false,
+    "bold": "texgyreheros-bold.otf",
+    "italic": "texgyreheros-italic.otf",
+    "bolditalic": "texgyreheros-bolditalic.otf"
+  },
+  "Verdana": {
+    "file": "texgyreheros-regular.otf",
+    "path": "",
+    "asian": false,
+    "bold": "texgyreheros-bold.otf",
+    "italic": "texgyreheros-italic.otf",
+    "bolditalic": "texgyreheros-bolditalic.otf"
+  },
+  "Tahoma": {
+    "file": "texgyreheros-regular.otf",
+    "path": "",
+    "asian": false,
+    "bold": "texgyreheros-bold.otf",
+    "italic": "texgyreheros-italic.otf",
+    "bolditalic": "texgyreheros-bolditalic.otf"
+  },
+  "Aptos": {
+    "file": "texgyreheros-regular.otf",
+    "path": "",
+    "asian": false,
+    "bold": "texgyreheros-bold.otf",
+    "italic": "texgyreheros-italic.otf",
+    "bolditalic": "texgyreheros-bolditalic.otf"
+  },
+  "Courier New": {
+    "file": "texgyrecursor-regular.otf",
+    "path": "",
+    "asian": false,
+    "bold": "texgyrecursor-bold.otf",
+    "italic": "texgyrecursor-italic.otf",
+    "bolditalic": "texgyrecursor-bolditalic.otf"
+  },
+  "Consolas": {
+    "file": "texgyrecursor-regular.otf",
+    "path": "",
+    "asian": false,
+    "bold": "texgyrecursor-bold.otf",
+    "italic": "texgyrecursor-italic.otf",
+    "bolditalic": "texgyrecursor-bolditalic.otf"
+  },
+  "Lucida Console": {
+    "file": "texgyrecursor-regular.otf",
+    "path": "",
+    "asian": false,
+    "bold": "texgyrecursor-bold.otf",
+    "italic": "texgyrecursor-italic.otf",
+    "bolditalic": "texgyrecursor-bolditalic.otf"
+  },
+  "SimSun": {
+    "file": "FandolSong-Regular.otf",
+    "path": "",
+    "asian": true,
+    "bold": "FandolSong-Bold.otf"
+  },
+  "宋体": {
+    "file": "FandolSong-Regular.otf",
+    "path": "",
+    "asian": true,
+    "bold": "FandolSong-Bold.otf"
+  },
+  "NSimSun": {
+    "file": "FandolSong-Regular.otf",
+    "path": "",
+    "asian": true,
+    "bold": "FandolSong-Bold.otf"
+  },
+  "新宋体": {
+    "file": "FandolSong-Regular.otf",
+    "path": "",
+    "asian": true,
+    "bold": "FandolSong-Bold.otf"
+  },
+  "MingLiU": {
+    "file": "FandolSong-Regular.otf",
+    "path": "",
+    "asian": true,
+    "bold": "FandolSong-Bold.otf"
+  },
+  "PMingLiU": {
+    "file": "FandolSong-Regular.otf",
+    "path": "",
+    "asian": true,
+    "bold": "FandolSong-Bold.otf"
+  },
+  "細明體": {
+    "file": "FandolSong-Regular.otf",
+    "path": "",
+    "asian": true,
+    "bold": "FandolSong-Bold.otf"
+  },
+  "新細明體": {
+    "file": "FandolSong-Regular.otf",
+    "path": "",
+    "asian": true,
+    "bold": "FandolSong-Bold.otf"
+  },
+  "SimHei": {
+    "file": "FandolHei-Regular.otf",
+    "path": "",
+    "asian": true,
+    "bold": "FandolHei-Bold.otf"
+  },
+  "黑体": {
+    "file": "FandolHei-Regular.otf",
+    "path": "",
+    "asian": true,
+    "bold": "FandolHei-Bold.otf"
+  },
+  "Microsoft YaHei": {
+    "file": "FandolHei-Regular.otf",
+    "path": "",
+    "asian": true,
+    "bold": "FandolHei-Bold.otf"
+  },
+  "微软雅黑": {
+    "file": "FandolHei-Regular.otf",
+    "path": "",
+    "asian": true,
+    "bold": "FandolHei-Bold.otf"
+  },
+  "Microsoft JhengHei": {
+    "file": "FandolHei-Regular.otf",
+    "path": "",
+    "asian": true,
+    "bold": "FandolHei-Bold.otf"
+  },
+  "微軟正黑體": {
+    "file": "FandolHei-Regular.otf",
+    "path": "",
+    "asian": true,
+    "bold": "FandolHei-Bold.otf"
+  },
+  "DengXian": {
+    "file": "FandolHei-Regular.otf",
+    "path": "",
+    "asian": true,
+    "bold": "FandolHei-Bold.otf"
+  },
+  "等线": {
+    "file": "FandolHei-Regular.otf",
+    "path": "",
+    "asian": true,
+    "bold": "FandolHei-Bold.otf"
+  },
+  "KaiTi": {
+    "file": "FandolKai-Regular.otf",
+    "path": "",
+    "asian": true
+  },
+  "楷体": {
+    "file": "FandolKai-Regular.otf",
+    "path": "",
+    "asian": true
+  },
+  "DFKai-SB": {
+    "file": "FandolKai-Regular.otf",
+    "path": "",
+    "asian": true
+  },
+  "標楷體": {
+    "file": "FandolKai-Regular.otf",
+    "path": "",
+    "asian": true
+  },
+  "FangSong": {
+    "file": "FandolFang-Regular.otf",
+    "path": "",
+    "asian": true
+  },
+  "仿宋": {
+    "file": "FandolFang-Regular.otf",
+    "path": "",
+    "asian": true
+  },
+  "Cambria Math": {
+    "file": "texgyretermes-math.otf",
+    "path": "",
+    "asian": false
+  }
+}

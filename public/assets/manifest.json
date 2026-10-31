@@ -1,0 +1,16 @@
+{
+  "docxlike": "/Users/wujunhao/latex-docxlike",
+  "runtime_sha256": {
+    "docxlike.sty": "1947eb70671daa0da9a4ef0beeea91010886e0ae007a6a942a1302f357241200",
+    "docxlike.lua": "e0cd39c9df6637239632bce48cf65d33fb20f6f67a69d3c66d1ea0ed58bf6c4b"
+  },
+  "distributed_sha256": {
+    "docxlike.sty": "509d1ddf92db139bef9d59149c8c24792c2bb7af7009a71c47ed62f6065fb239",
+    "docxlike.lua": "3e306805134f516a0e20a6ca57d9f9478d15cf7d7051d19a0377c45883712963"
+  },
+  "converter_sha256": "29c5ea6170405ee757f91e32b6e345d3f3978e164f67d7d2fcbe47989d961b33",
+  "font_maps": {
+    "system": "original Word family names (host fonts required)",
+    "texlive": "37 TeX Live substitute families"
+  }
+}

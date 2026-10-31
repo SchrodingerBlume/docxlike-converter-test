@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.DS_Store
+build/
+
+# Synced from node_modules by postinstall
+public/pyodide/
