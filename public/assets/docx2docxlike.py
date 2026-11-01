@@ -1018,6 +1018,11 @@ class Converter:
                 self.uses_amssymb=True; out.append(r'\ensuremath{\square}'); prev_space=False; i+=1; continue
             if ch in '\u2611\u2612':
                 self.uses_amssymb=True; out.append(r'\ensuremath{\boxtimes}'); prev_space=False; i+=1; continue
+            if ch in '\u25cb\u25cf\u25b3\u25b2\u25c7\u25c6':
+                self.uses_amssymb=True
+                glyph={'\u25cb':r'\bigcirc','\u25cf':r'\bullet','\u25b3':r'\triangle',
+                       '\u25b2':r'\blacktriangle','\u25c7':r'\diamond','\u25c6':r'\blacklozenge'}[ch]
+                out.append(r'\ensuremath{'+glyph+'}'); prev_space=False; i+=1; continue
             if ch=='\u2032':
                 out.append(r"\ensuremath{\prime}"); prev_space=False; i+=1; continue
             if ch=='\uf0b7':

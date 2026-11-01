@@ -33,6 +33,10 @@ const samples = [
   ["real-fp-pre", "/Users/wujunhao/emt-fpe/emt/Fp-pre.docx"],
   ["real-frame", "/Users/wujunhao/emt-fpe/emt/frame.docx"],
   ["real-symbols", "/Users/wujunhao/Desktop/吴俊豪开题报告.docx"],
+  [
+    "real-template",
+    "/Users/wujunhao/gxuthesis/广西大学研究生学位论文编写规则、模板（博士硕士通用）-20260324（题名页含学术学位和专业学位2个版本）(1).docx",
+  ],
 ];
 
 const pyodide = await loadPyodide({ indexURL: join(root, "node_modules", "pyodide") + "/" });
@@ -92,7 +96,7 @@ json.dumps(result, ensure_ascii=False)
     });
   }
   const pdf = await stat(join(main, "main.pdf"));
-  if (name === "real-fp-pre" || name === "real-symbols") {
+  if (name === "real-fp-pre" || name === "real-symbols" || name === "real-template") {
     const log = await readFile(join(main, "main.log"), "utf8");
     const missing = name === "real-fp-pre" ? "There is no ô" : "Missing character";
     if (log.includes(missing)) throw new Error(`${name} still has missing glyphs`);
