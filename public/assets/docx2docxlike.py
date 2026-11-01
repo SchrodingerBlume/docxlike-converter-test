@@ -351,6 +351,20 @@ class Converter:
         if position: layout.append('position={'+','.join(position)+'}')
         self.anchors.append('\\docxinsert[pictures={layout={'+','.join(layout)+'}}]{'+body+'}')
         return ''
+    def vml_rule_width(self,pict):
+        """Width in bp of a VML horizontal rule, or None for other shapes."""
+        for rect in pict.iter(V+'rect'):
+            style=dict(x.split(':',1) for x in (rect.get('style') or '').split(';') if ':' in x)
+            def length(v):
+                m=re.match(r'([\d.]+)(pt|in|cm|mm|px)?',v or '')
+                if not m: return None
+                f={'pt':1,'in':72,'cm':72/2.54,'mm':72/25.4,'px':0.75,None:1}[m.group(2)]
+                return float(m.group(1))*f
+            w,h=length(style.get('width')),length(style.get('height'))
+            if w is not None and w>1 and h is not None and h<=1.2:
+                return w
+        return None
+
     def vml_picture(self,pict):
         shape=pict.find(f'.//{V}shape'); img=pict.find(f'.//{V}imagedata')
         if shape is None or img is None: return None
@@ -1235,9 +1249,13 @@ class Converter:
                 if pic: parts.append(('raw',pic))
                 elif pic is None: self.rep.add('drawing (not converted)')
             elif n=='pict':
-                pic=self.vml_picture(c)
-                if pic: parts.append(('raw',pic))
-                else: self.rep.add('pict (VML shape, not converted)')
+                rule=self.vml_rule_width(c)
+                if rule:
+                    parts.append(('raw',r'\strut\rule{'+f'{rule:g}bp'+r'}{0.1bp}'))
+                else:
+                    pic=self.vml_picture(c)
+                    if pic: parts.append(('raw',pic))
+                    else: self.rep.add('pict (VML shape, not converted)')
             elif n=='object':
                 pic=self.vml_picture(c)
                 if pic: parts.append(('raw',pic)); self.rep.add('object (OLE: its preview picture used)')
