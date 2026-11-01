@@ -29,6 +29,8 @@ const samples = [
     "real-table",
     "/Users/wujunhao/emt-fpe/emt/A Graph Neural Network and Probabilistic Framework for Modeling EMT Dynamics in Single.docx",
   ],
+  ["real-step", "/Users/wujunhao/emt-fpe/emt/步骤1.docx"],
+  ["real-fp-pre", "/Users/wujunhao/emt-fpe/emt/Fp-pre.docx"],
 ];
 
 const pyodide = await loadPyodide({ indexURL: join(root, "node_modules", "pyodide") + "/" });
@@ -88,7 +90,7 @@ json.dumps(result, ensure_ascii=False)
     });
   }
   const pdf = await stat(join(main, "main.pdf"));
-  if (name === "real-document" || name === "real-table") {
+  if (["real-document", "real-table", "real-step", "real-fp-pre"].includes(name)) {
     const pages = Number(
       execFileSync(nativePython, ["-c", "import pymupdf,sys; print(len(pymupdf.open(sys.argv[1])))", join(main, "main.pdf")], {
         encoding: "utf8",
