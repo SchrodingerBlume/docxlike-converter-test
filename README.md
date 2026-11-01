@@ -4,6 +4,10 @@
 转换结果是一个 ZIP：`main.tex`、图片目录，以及可与最新版 docxlike 配套使用的
 `docxlike.sty` 和 `docxlike.lua`。
 
+## 在线使用
+
+<https://schrodingerblume.github.io/docxlike-web/>
+
 ## 使用
 
 1. 打开站点，拖入 `.docx`。
