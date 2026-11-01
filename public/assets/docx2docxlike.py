@@ -974,7 +974,14 @@ class Converter:
                 pars=[]
                 for e in part:
                     n=e.tag.replace(W,'')
-                    if n=='p': pars+=self.paragraph(e,story='headfoot')
+                    if n=='p':
+                        text=''.join(t.text or '' for t in e.iter(q('t'))).strip()
+                        objects=any(x.tag in (q('drawing'),q('pict'),q('br'),q('fldChar'),q('instrText')) for x in e.iter())
+                        # An empty styled paragraph in a header/footer is a layout
+                        # placeholder; docxlike cannot typeset it without leaving
+                        # horizontal mode. Skip it instead of failing the build.
+                        if not text and not objects: continue
+                        pars+=self.paragraph(e,story='headfoot')
                     elif n=='sdt':
                         c=e.find(q('sdtContent'))
                         for x in (c.findall(q('p')) if c is not None else []): pars+=self.paragraph(x,story='headfoot')
