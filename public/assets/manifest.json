@@ -8,7 +8,7 @@
     "docxlike.sty": "1768ad7f88e72089095b053db632a1be710cb4c69e31042abfc71c9f1c25f81c",
     "docxlike.lua": "6348b0ddb447038a6e2c1d56e282582467d43f9eb139a2166925f0d7b611f634"
   },
-  "converter_sha256": "907764b5da87d93b57af5dcf756e95c960b41bb15bca5b3ecd011dad7d275aae",
+  "converter_sha256": "8b63d2f0a3bba6707b156b2e750db50facccc53c66d652f3a3e6a08518076ec5",
   "font_maps": {
     "system": "original Word family names (host fonts required)",
     "texlive": "37 TeX Live substitute families"

@@ -246,7 +246,7 @@ class Converter:
         self.doc=self.xml('word/document.xml'); self.styles=self.xml('word/styles.xml'); self.settings=self.xml('word/settings.xml')
         self.theme=self.xml('word/theme/theme1.xml'); self.rels=self.load_rels()
         self.media_dir=media_dir; self.media_prefix=media_prefix; self.part_rels=None; self.anchors=[]; self.story='body'
-        self.compat=15; self.joined=''; self.section_list=[]; self.no_expand_shift_return=False
+        self.compat=15; self.joined=''; self.section_list=[]; self.no_expand_shift_return=False; self.pending_break=False
         self.fonts_used=set(); self.languages={}; self.style_names={}; self.fields=[]; self.blocks=[]
         self.style_lists={}; self.used_nums=set(); self.notes_xml={}; self.used_notes=set(); self.numbering=self.xml('word/numbering.xml')
         self.default_par_style=next((s.get(q('styleId')) for s in (self.styles.findall(q('style')) if self.styles is not None else [])
@@ -1360,6 +1360,15 @@ class Converter:
     def paragraph1(self,p,story='body'):
         self.par_num=None; self.story=story
         par,other,style=self.ppr(p.find(q('pPr')))
+        # a page-break-only paragraph is a break, not an empty line
+        if story=='body' and not ''.join(t.text or '' for t in p.iter(q('t'))).strip() \
+            and any(br.get(q('type'))=='page' for br in p.iter(q('br'))):
+            self.pending_break=True
+            return None
+        if story=='body' and self.pending_break:
+            par=[x for x in par if not x.startswith('pagination={page-break-before=')]
+            par.append('pagination={page-break-before=true}')
+            self.pending_break=False
         # a header paragraph without pStyle is Normal in Word; docxlike would use Header there
         if story=='headfoot' and not style: style=self.default_par_style
         if story=='body':
