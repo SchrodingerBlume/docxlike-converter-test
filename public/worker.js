@@ -56,7 +56,7 @@ async function loadAssets(pyodide) {
   return assetsPromise;
 }
 
-async function convert(buffer, fileName, fontMode) {
+async function convert(buffer, fileName, fontMode, profile = null) {
   const pyodide = await getEngine();
   const manifest = await loadAssets(pyodide);
   post("stage", { stage: "parse" });
@@ -67,13 +67,15 @@ async function convert(buffer, fileName, fontMode) {
     pyodide.FS.mkdirTree("/work");
   } catch {}
   pyodide.FS.writeFile("/work/input.docx", new Uint8Array(buffer));
+  pyodide.globals.set("profile_json", JSON.stringify(profile || null));
   const raw = await pyodide.runPythonAsync(`
 import json, shutil, pathlib
 work = pathlib.Path('/work/out')
 if work.exists():
     shutil.rmtree(work)
+profile = json.loads(profile_json) if profile_json else None
 result = convert('/work/input.docx', '/work/out', '/assets/docx2docxlike.py', '${fontMap}',
-                 ['/assets/docxlike.sty', '/assets/docxlike.lua'])
+                 ['/assets/docxlike.sty', '/assets/docxlike.lua'], profile=profile)
 json.dumps(result, ensure_ascii=False)
 `);
   const report = JSON.parse(raw);
@@ -100,10 +102,10 @@ shutil.rmtree('/work', ignore_errors=True)
 }
 
 self.onmessage = async (event) => {
-  const { type, buffer, fileName, fontMode } = event.data || {};
+  const { type, buffer, fileName, fontMode, profile } = event.data || {};
   if (type !== "convert") return;
   try {
-    await convert(buffer, fileName, fontMode);
+    await convert(buffer, fileName, fontMode, profile);
   } catch (error) {
     const message = (error && (error.message || String(error))) || "转换失败";
     post("error", { message });

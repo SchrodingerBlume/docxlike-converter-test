@@ -230,7 +230,7 @@ class Converter:
         if character_spacing:asian.append('character-spacing={'+','.join(character_spacing)+'}')
         if asian:result.append('asian-typography={'+','.join(asian)+'}')
         return result
-    def __init__(self,path,font_map=None,media_dir=None,media_prefix='',paragraph_defaults=None):
+    def __init__(self,path,font_map=None,media_dir=None,media_prefix='',paragraph_defaults=None,profile=None):
         self.z=zipfile.ZipFile(path); self.rep=Report(); self.font_map=font_map or {}
         self.paragraph_defaults=paragraph_defaults
         if paragraph_defaults is not None:
@@ -254,6 +254,26 @@ class Converter:
         self.default_char_style=next((s.get(q('styleId')) for s in (self.styles.findall(q('style')) if self.styles is not None else [])
                                       if s.get(q('type'))=='character' and s.get(q('default')) in ('1','true')),None)
         self.styles_by_id={s.get(q('styleId')):s for s in (self.styles.findall(q('style')) if self.styles is not None else [])}
+        self.style_names={sid:(val(s.find(q('name'))) or sid) for sid,s in self.styles_by_id.items()}
+        self.style_types={self.name_of(sid):s.get(q('type')) for sid,s in self.styles_by_id.items()
+                          if s.get(q('type')) in ('paragraph','character')}
+        self.style_aliases={}
+        if profile is not None:
+            if not isinstance(profile,dict) or set(profile)-{'version','style_aliases'}:
+                raise ValueError('profile must contain only version and style_aliases')
+            if profile.get('version',1)!=1: raise ValueError('profile version must be 1')
+            aliases=profile.get('style_aliases',{})
+            if not isinstance(aliases,dict): raise ValueError('style_aliases must be an object')
+            known=set(self.style_types)
+            for source,target in aliases.items():
+                if not isinstance(source,str) or not isinstance(target,str):
+                    raise ValueError('style aliases must map strings to strings')
+                if source not in known: raise ValueError(f'unknown source style: {source}')
+                if target not in known: raise ValueError(f'unknown target style: {target}')
+                if source==target: continue
+                if self.style_types[source]!=self.style_types[target]:
+                    raise ValueError(f'style type mismatch: {source} -> {target}')
+            self.style_aliases=dict(aliases)
         self.paragraph_font_flags=None
     def xml(self,name):
         try: return ET.fromstring(self.z.read(name))
@@ -727,6 +747,12 @@ class Converter:
     def name_of(self,sid,name=None):
         n=name or self.style_names.get(sid,sid)
         return re.sub(r'[{},=]','',n)
+    def style_ref(self,sid,name=None):
+        n=self.name_of(sid,name)
+        return self.style_aliases.get(n,n)
+    def style_inventory(self):
+        return sorted(({'id':sid,'name':self.name_of(sid),'type':self.style_types[self.name_of(sid)]}
+                       for sid in self.style_types),key=lambda x:(x['type'],x['name']))
 
     def settings_keys(self):
         k=[]; s=self.settings
@@ -897,7 +923,7 @@ class Converter:
             if not font and not text:
                 font,_=self.rpr(p.find(f'{q("pPr")}/{q("rPr")}'))
             keys=[]
-            if style: keys.append(f'style={self.name_of(style)}')
+            if style: keys.append(f'style={self.style_ref(style)}')
             if par: keys.append('paragraph={'+','.join(par)+'}')
             keys+=[x for x in other if x.split('=')[0] in ('border','shading')]
             if font: keys.append('font={'+','.join(font)+'}')
@@ -956,7 +982,7 @@ class Converter:
                 if tab is not None and suff=='tab' and val(tab)=='num': pos.append(f'add-tab-stop-at={bp(tab.get(q("pos")))}')
                 keys.append('number-format={'+','.join(nf)+'}'); keys.append('position={'+','.join(pos)+'}')
                 for sid,(lnid,llvl) in self.style_lists.items():
-                    if lnid==nid and llvl==il: keys.append('link-level-to-style='+self.name_of(sid))
+                    if lnid==nid and llvl==il: keys.append('link-level-to-style='+self.style_ref(sid))
             out.append('\\docxformat[define-new-multilevel-list={'+','.join(keys)+'}]{}')
         return out
     HF_TYPE={'default':'','first':'first-page','even':'even-page'}
@@ -1303,12 +1329,12 @@ class Converter:
         # Note insertion sets the reference mark in its own reference style; the run's copy
         # of that style would make the mark a superscript of a superscript
         if style and any(c.tag in (q('footnoteReference'),q('endnoteReference')) for c in r) \
-                and self.name_of(style).lower().replace(' ','') in ('footnotereference','endnotereference'):
+                and self.style_ref(style).lower().replace(' ','') in ('footnotereference','endnotereference'):
             style=None
         raw_font=self.font_requires_backend(keys)
         if raw_font:self.rep.add('run font outside supported author controls (programming route)')
-        opts=(([f'style={self.name_of(style)}'] if style else [])+keys if raw_font else
-              self.font_options(keys, self.name_of(style) if style else None))
+        opts=(([f'style={self.style_ref(style)}'] if style else [])+keys if raw_font else
+              self.font_options(keys, self.style_ref(style) if style else None))
         out=[]; chunk=[]
         def flush():
             body=''.join(chunk); chunk.clear()
@@ -1452,7 +1478,7 @@ class Converter:
             self.joined=content; return None
         opts=[]
         if self.display_math: par=[x for x in par if not x.startswith('alignment=')]+['alignment=centered']
-        if style: opts.append(f'style={self.name_of(style)}')
+        if style: opts.append(f'style={self.style_ref(style)}')
         if par:
             author_par=self.author_paragraph(par)
             opts.append('paragraph={'+','.join(author_par)+'}')
@@ -1471,7 +1497,7 @@ class Converter:
         if raw_mark:self.rep.add('paragraph-mark font outside supported author controls (programming route)')
         if raw_spacing or raw_bottom or raw_mark or any(key.startswith('tabs=') and 'leader=middle-dot' in key for key in other):
             # Preserve raw OOXML values without inventing a supported author control.
-            backend_opts=([f'style={self.name_of(style)}'] if style else [])
+            backend_opts=([f'style={self.style_ref(style)}'] if style else [])
             if par: backend_opts.append('paragraph={'+','.join(par)+'}')
             backend_opts+=other
             if not content.strip() and mark: backend_opts.append('font={'+','.join(mark)+'}')
@@ -1738,7 +1764,7 @@ class Converter:
         par,other,style=self.ppr(first.find(q('pPr')))
         par=[x for x in par if not x.startswith('pagination')]
         keys=self.frame_keys(first.find(f'{q("pPr")}/{q("framePr")}'))
-        if style: keys.insert(0,f'style={self.name_of(style)}')
+        if style: keys.insert(0,f'style={self.style_ref(style)}')
         fmt=(['paragraph={'+','.join(par)+'}'] if par else [])+[o for o in other if not o.startswith(('numbering','multilevel'))]
         if fmt: keys.insert(1 if style else 0,'format={'+','.join(fmt)+'}')
         content='\\break '.join(self.paragraph_runs(x) for x in group)
@@ -1889,13 +1915,15 @@ def main():
     ap.add_argument('docx',type=Path); ap.add_argument('tex',type=Path)
     ap.add_argument('--font-map',type=Path); ap.add_argument('--report',type=Path)
     ap.add_argument('--paragraph-defaults',type=Path,help='Target-application paragraph spacing JSON, used only when pPrDefault is omitted')
+    ap.add_argument('--profile',type=Path,help='Constrained style profile JSON (style_aliases only)')
     a=ap.parse_args()
     fm=json.loads(a.font_map.read_text()) if a.font_map else None
     # images go to <tex name>-media/ next to the .tex
     media=a.tex.parent/(a.tex.stem+'-media')
     defaults=json.loads(a.paragraph_defaults.read_text()) if a.paragraph_defaults else None
+    profile=json.loads(a.profile.read_text()) if a.profile else None
     try:
-        c=Converter(a.docx,fm,media_dir=media,media_prefix=media.name+'/',paragraph_defaults=defaults)
+        c=Converter(a.docx,fm,media_dir=media,media_prefix=media.name+'/',paragraph_defaults=defaults,profile=profile)
     except ValueError as error:
         ap.error(str(error))
     a.tex.write_text(c.convert())

@@ -18,7 +18,7 @@ def _load_converter(path: str):
     return module
 
 
-def convert(docx_path: str, out_dir: str, converter_path: str, font_map_path: str, runtime_paths: list[str]) -> dict:
+def convert(docx_path: str, out_dir: str, converter_path: str, font_map_path: str, runtime_paths: list[str], profile=None) -> dict:
     out = pathlib.Path(out_dir)
     if out.exists():
         shutil.rmtree(out)
@@ -32,6 +32,7 @@ def convert(docx_path: str, out_dir: str, converter_path: str, font_map_path: st
         font_map,
         media_dir=media,
         media_prefix="main-media/",
+        profile=profile,
     )
     tex = converter.convert()
     (out / "main.tex").write_text(tex, encoding="utf-8")
@@ -51,6 +52,7 @@ def convert(docx_path: str, out_dir: str, converter_path: str, font_map_path: st
         "unmapped_fonts": unmapped,
         "tex_lines": tex.count("\n") + 1,
         "media_files": sum(1 for path in media.rglob("*") if path.is_file()) if media.exists() else 0,
+        "styles": converter.style_inventory(),
     }
 
 

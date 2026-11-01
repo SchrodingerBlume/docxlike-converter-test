@@ -17,12 +17,26 @@ const fontmodeWarning = $("fontmode-warning");
 const reportBox = $("report-box");
 const reportList = $("report");
 const runtimeHash = $("runtime-hash");
+const aiBox = $("ai-box");
+const aiBase = $("ai-base");
+const aiModel = $("ai-model");
+const aiKey = $("ai-key");
+const aiEnable = $("ai-enable");
+const aiResult = $("ai-result");
+const aiSuggest = $("ai-suggest");
+const aiStatus = $("ai-status");
+const aiProposals = $("ai-proposals");
+const aiList = $("ai-list");
+const aiApply = $("ai-apply");
+const aiCancel = $("ai-cancel");
 
 const MAX_BYTES = 100 * 1024 * 1024;
 const worker = new Worker("worker.js", { type: "module" });
 let currentFile = null;
 let currentUrl = null;
 let busy = false;
+let lastReport = null;
+let pendingAliases = null;
 
 function formatBytes(value) {
   if (value < 1024) return `${value} B`;
@@ -49,6 +63,11 @@ function setFile(file) {
     currentUrl = null;
   }
   currentFile = null;
+  lastReport = null;
+  pendingAliases = null;
+  aiResult.classList.add("hidden");
+  aiProposals.classList.add("hidden");
+  aiStatus.textContent = "";
   convertButton.disabled = true;
 
   if (!file) {
@@ -113,11 +132,125 @@ function showReport(report) {
   reportBox.classList.remove("hidden");
 }
 
-convertButton.addEventListener("click", async () => {
+function extractJson(text) {
+  const value = String(text || "").trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  const start = value.indexOf("{");
+  const end = value.lastIndexOf("}");
+  if (start < 0 || end <= start) throw new Error("AI 返回内容不是 JSON 对象。");
+  return JSON.parse(value.slice(start, end + 1));
+}
+
+function validateStyleProfile(value, inventory) {
+  if (!value || value.version !== 1) throw new Error("AI JSON 缺少 version: 1。");
+  if (!value.style_aliases || typeof value.style_aliases !== "object" || Array.isArray(value.style_aliases)) {
+    throw new Error("AI JSON 缺少 style_aliases 对象。");
+  }
+  const styles = new Map(inventory.map((style) => [style.name, style]));
+  const aliases = {};
+  for (const [source, target] of Object.entries(value.style_aliases)) {
+    if (typeof target !== "string") throw new Error(`样式 ${source} 的目标不是字符串。`);
+    if (source === target) continue;
+    const from = styles.get(source);
+    const to = styles.get(target);
+    if (!from) throw new Error(`AI 返回了清单中不存在的源样式：${source}`);
+    if (!to) throw new Error(`AI 返回了清单中不存在的目标样式：${target}`);
+    if (from.type !== to.type) throw new Error(`样式类型不一致：${source} (${from.type}) → ${target} (${to.type})`);
+    aliases[source] = target;
+  }
+  if (!Object.keys(aliases).length) throw new Error("AI 没有给出可应用的样式映射。");
+  return { version: 1, style_aliases: aliases };
+}
+
+function chatUrl(base) {
+  const clean = base.trim().replace(/\/+$/, "");
+  return clean.endsWith("/chat/completions") ? clean : `${clean}/chat/completions`;
+}
+
+async function suggestStyles() {
+  if (!lastReport?.styles?.length) {
+    aiStatus.textContent = "转换报告里没有可映射的样式。";
+    return;
+  }
+  const base = aiBase.value.trim();
+  const model = aiModel.value.trim();
+  const key = aiKey.value.trim();
+  if (!base || !model || !key) {
+    aiStatus.textContent = "请先填写 API Base URL、模型和 API Key。";
+    return;
+  }
+  const inventory = lastReport.styles.slice(0, 300);
+  const system = [
+    "你是 DOCX 样式映射器。",
+    "只输出一个 JSON 对象，格式为 {\"version\":1,\"style_aliases\":{\"源样式名\":\"目标样式名\"}}。",
+    "只能使用输入 styles 清单中存在的 name；源和目标必须是同一 type（paragraph 或 character）。",
+    "不要输出 LaTeX、Lua、脚本、解释或 Markdown；不要修改正文。",
+    "不确定的样式不要映射；不要映射到自身；最多 50 条。",
+  ].join(" ");
+  aiSuggest.disabled = true;
+  aiApply.disabled = true;
+  aiStatus.textContent = "正在请求 AI 样式建议…";
+  try {
+    const response = await fetch(chatUrl(base), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model,
+        temperature: 0,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: JSON.stringify({ styles: inventory }) },
+        ],
+      }),
+    });
+    const text = await response.text();
+    if (!response.ok) throw new Error(`API HTTP ${response.status}: ${text.slice(0, 300)}`);
+    const data = JSON.parse(text);
+    const content = data.choices?.[0]?.message?.content;
+    const profile = validateStyleProfile(extractJson(content), inventory);
+    pendingAliases = profile;
+    aiList.replaceChildren();
+    for (const [source, target] of Object.entries(profile.style_aliases)) {
+      const item = document.createElement("li");
+      item.textContent = `${source} → ${target}`;
+      aiList.append(item);
+    }
+    aiProposals.classList.remove("hidden");
+    aiStatus.textContent = `已校验 ${Object.keys(profile.style_aliases).length} 条映射；应用后只改变 style= 引用，不改文字。`;
+  } catch (error) {
+    pendingAliases = null;
+    aiProposals.classList.add("hidden");
+    aiStatus.textContent = `AI 建议失败：${error.message || String(error)}`;
+  } finally {
+    aiSuggest.disabled = false;
+    aiApply.disabled = false;
+  }
+}
+
+aiSuggest.addEventListener("click", suggestStyles);
+aiCancel.addEventListener("click", () => {
+  pendingAliases = null;
+  aiProposals.classList.add("hidden");
+  aiStatus.textContent = "已取消。";
+});
+aiApply.addEventListener("click", async () => {
+  if (!pendingAliases || busy) return;
+  aiApply.disabled = true;
+  aiSuggest.disabled = true;
+  aiStatus.textContent = "正在按 AI 映射重新转换…";
+  await startConversion(pendingAliases, true);
+});
+aiEnable.addEventListener("change", () => {
+  aiResult.classList.toggle("hidden", !(aiEnable.checked && lastReport?.styles?.length));
+});
+aiBox.addEventListener("toggle", () => {
+  if (aiBox.open) aiBase.focus();
+});
+
+async function startConversion(profile = null, keepResult = false) {
   if (!currentFile || busy) return;
   busy = true;
   clearError();
-  result.classList.add("hidden");
+  if (!keepResult) result.classList.add("hidden");
   convertButton.disabled = true;
   clearButton.disabled = true;
   progress.classList.remove("hidden");
@@ -126,7 +259,7 @@ convertButton.addEventListener("click", async () => {
   try {
     const buffer = await readFile(currentFile);
     const fontMode = document.querySelector('input[name="fontmode"]:checked')?.value || "system";
-    worker.postMessage({ type: "convert", buffer, fileName: currentFile.name, fontMode }, [buffer]);
+    worker.postMessage({ type: "convert", buffer, fileName: currentFile.name, fontMode, profile }, [buffer]);
   } catch (error) {
     busy = false;
     convertButton.disabled = false;
@@ -134,7 +267,9 @@ convertButton.addEventListener("click", async () => {
     progress.classList.add("hidden");
     showError(error.message || String(error));
   }
-});
+}
+
+convertButton.addEventListener("click", () => startConversion());
 
 worker.addEventListener("message", (event) => {
   const data = event.data || {};
@@ -147,6 +282,8 @@ worker.addEventListener("message", (event) => {
     convertButton.disabled = !currentFile;
     clearButton.disabled = false;
     progress.classList.add("hidden");
+    aiApply.disabled = false;
+    aiSuggest.disabled = false;
     showError(data.message);
     return;
   }
@@ -158,6 +295,11 @@ worker.addEventListener("message", (event) => {
   progress.classList.add("hidden");
 
   const report = data.report;
+  lastReport = report;
+  pendingAliases = null;
+  aiProposals.classList.add("hidden");
+  aiApply.disabled = false;
+  aiSuggest.disabled = false;
   const total = report.report_total || 0;
   const media = report.media_files || 0;
   const fonts = report.fonts_used?.length || 0;
@@ -184,6 +326,8 @@ worker.addEventListener("message", (event) => {
   }
 
   showReport(report);
+  aiResult.classList.toggle("hidden", !(aiEnable.checked && report.styles?.length));
+  aiStatus.textContent = "";
   if (data.manifest?.runtime_sha256) {
     runtimeHash.textContent = `· Lua ${data.manifest.runtime_sha256["docxlike.lua"].slice(0, 12)}`;
   }

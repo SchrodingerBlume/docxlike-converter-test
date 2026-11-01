@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "assets": "python3 scripts/build-assets.py",
     "postinstall": "node scripts/sync-pyodide.mjs",
-    "test:browser": "node scripts/browser-test.mjs"
+    "test:browser": "node scripts/browser-test.mjs",
+    "test:ai": "node scripts/browser-ai-test.mjs"
   },
   "keywords": [
     "docx",

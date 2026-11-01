@@ -59,6 +59,29 @@
           </label>
         </fieldset>
 
+        <details id="ai-box" class="ai-box">
+          <summary>AI 样式辅助（可选，实验性）</summary>
+          <p class="ai-note">
+            AI 只接收样式名称/类型清单，不接收正文；只允许返回
+            <code>style_aliases</code> JSON，不生成 TeX 或 Lua。API Key 只留在当前页面内存中。
+          </p>
+          <div class="ai-fields">
+            <label>API Base URL
+              <input id="ai-base" type="url" autocomplete="off" spellcheck="false" placeholder="https://api.openai.com/v1" />
+            </label>
+            <label>模型
+              <input id="ai-model" type="text" autocomplete="off" spellcheck="false" placeholder="gpt-4o-mini" />
+            </label>
+            <label>API Key
+              <input id="ai-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-..." />
+            </label>
+          </div>
+          <label class="ai-check">
+            <input id="ai-enable" type="checkbox" />
+            转换后显示“AI 样式建议”
+          </label>
+        </details>
+
         <div class="actions">
           <button id="convert" class="primary" type="button" disabled>开始转换</button>
           <span id="hint" class="hint">首次转换需要加载约 12 MB 的转换引擎。</span>
@@ -87,6 +110,16 @@
             <summary>转换报告（降级、占位与编程路径提示）</summary>
             <ul id="report"></ul>
           </details>
+          <div id="ai-result" class="ai-result hidden">
+            <button id="ai-suggest" class="secondary" type="button">让 AI 建议样式映射</button>
+            <p id="ai-status" class="hint"></p>
+            <div id="ai-proposals" class="hidden">
+              <p class="ai-proposal-title">AI 只提出样式别名，应用前请检查：</p>
+              <ul id="ai-list"></ul>
+              <button id="ai-apply" class="primary" type="button">应用映射并重新转换</button>
+              <button id="ai-cancel" class="link-button" type="button">取消</button>
+            </div>
+          </div>
         </div>
       </section>
 

@@ -31,7 +31,20 @@ Overleaf 和完整 TeX Live 安装上可直接编译：
 替代字体与 Windows 原字体的字形细节不同；版式推进由 docxlike 的 Word 度量规则
 处理，但这不是“嵌入原字体”的一比一复刻。
 
+## AI 样式辅助（可选）
+
+页面里可以填写自己的 OpenAI-compatible API（Base URL、模型、Key），在机械转换后请求“样式映射建议”。约束是固定的：
+
+- 只发送样式名称和类型清单，不发送正文；API Key 只保存在当前页面内存中，不写入仓库。
+- AI 只能返回 `{"version":1,"style_aliases":{"源样式":"目标样式"}}`，不能生成 TeX、Lua 或脚本。
+- 前端会校验源/目标样式是否存在、类型是否一致；应用前由用户确认。
+- 映射只改变生成的 `style=` 引用，渲染仍由确定性转换器完成；失败可回退到机械结果。
+- GitHub Pages 是静态站，浏览器直连 API 需要服务端允许 CORS；Key 不经过本站服务器。
+
 ## 开发
+
+第一阶段实现与限制见 `reports/ai-style-profile-20261101.md`。
+
 
 ```sh
 npm install
