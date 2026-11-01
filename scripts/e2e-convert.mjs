@@ -32,6 +32,7 @@ const samples = [
   ["real-step", "/Users/wujunhao/emt-fpe/emt/步骤1.docx"],
   ["real-fp-pre", "/Users/wujunhao/emt-fpe/emt/Fp-pre.docx"],
   ["real-frame", "/Users/wujunhao/emt-fpe/emt/frame.docx"],
+  ["real-symbols", "/Users/wujunhao/Desktop/吴俊豪开题报告.docx"],
 ];
 
 const pyodide = await loadPyodide({ indexURL: join(root, "node_modules", "pyodide") + "/" });
@@ -91,9 +92,10 @@ json.dumps(result, ensure_ascii=False)
     });
   }
   const pdf = await stat(join(main, "main.pdf"));
-  if (name === "real-fp-pre") {
+  if (name === "real-fp-pre" || name === "real-symbols") {
     const log = await readFile(join(main, "main.log"), "utf8");
-    if (log.includes("There is no ô")) throw new Error("missing ô glyph survived the fallback");
+    const missing = name === "real-fp-pre" ? "There is no ô" : "Missing character";
+    if (log.includes(missing)) throw new Error(`${name} still has missing glyphs`);
   }
   if (["real-document", "real-table", "real-step", "real-fp-pre", "real-frame"].includes(name)) {
     const pages = Number(

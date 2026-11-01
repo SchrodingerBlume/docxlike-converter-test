@@ -246,7 +246,7 @@ class Converter:
         self.doc=self.xml('word/document.xml'); self.styles=self.xml('word/styles.xml'); self.settings=self.xml('word/settings.xml')
         self.theme=self.xml('word/theme/theme1.xml'); self.rels=self.load_rels()
         self.media_dir=media_dir; self.media_prefix=media_prefix; self.part_rels=None; self.anchors=[]; self.story='body'
-        self.compat=15; self.joined=''; self.section_list=[]; self.no_expand_shift_return=False; self.pending_break=False
+        self.compat=15; self.joined=''; self.section_list=[]; self.no_expand_shift_return=False; self.pending_break=False; self.uses_amssymb=False
         self.fonts_used=set(); self.languages={}; self.style_names={}; self.fields=[]; self.blocks=[]
         self.style_lists={}; self.used_nums=set(); self.notes_xml={}; self.used_notes=set(); self.numbering=self.xml('word/numbering.xml')
         self.default_par_style=next((s.get(q('styleId')) for s in (self.styles.findall(q('style')) if self.styles is not None else [])
@@ -1008,6 +1008,20 @@ class Converter:
         url=bool(re.search(r'(https?://|ftp://|www\.|//[A-Za-z0-9]|%20|#:~:text=)',s))
         while i<len(s):
             ch=s[i]
+            if ch in '\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f':
+                out.append(r'\ '); prev_space=True; i+=1; continue
+            if ch=='\u3000':
+                out.append(r'\hspace{1em}'); prev_space=False; i+=1; continue
+            if ch=='\u200b':
+                i+=1; continue
+            if ch in '\u25a1\u2610':
+                self.uses_amssymb=True; out.append(r'\ensuremath{\square}'); prev_space=False; i+=1; continue
+            if ch in '\u2611\u2612':
+                self.uses_amssymb=True; out.append(r'\ensuremath{\boxtimes}'); prev_space=False; i+=1; continue
+            if ch=='\u2032':
+                out.append(r"\ensuremath{\prime}"); prev_space=False; i+=1; continue
+            if ch=='\uf0b7':
+                out.append(r'\textbullet{}'); prev_space=False; i+=1; continue
             table=self.SUBSCRIPT if ch in self.SUBSCRIPT else self.SUPERSCRIPT if ch in self.SUPERSCRIPT else None
             if table is not None:
                 j=i; digits=''
@@ -1845,6 +1859,8 @@ class Converter:
             m=self.font_map.get('Cambria Math')
             head.append(r'\usepackage{amsmath,unicode-math}')
             head.append(r'\setmathfont{'+m['file']+'}[Path={'+m['path']+'}'+(f',FontIndex={m["index"]}' if 'index' in m else '')+']' if m else r'\setmathfont{Cambria Math}')
+        elif self.uses_amssymb:
+            head.append(r'\usepackage{amssymb}')
         if getattr(self,'uses_multirow',False): head.append(r'\usepackage{multirow}')
         if getattr(self,'uses_colortbl',False): head.append(r'\usepackage[table]{xcolor}')
         head+=[r'\ExplSyntaxOn\docxlike_body_setup:n{}\ExplSyntaxOff']
