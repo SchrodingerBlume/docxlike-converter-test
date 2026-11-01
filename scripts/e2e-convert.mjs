@@ -31,6 +31,7 @@ const samples = [
   ],
   ["real-step", "/Users/wujunhao/emt-fpe/emt/步骤1.docx"],
   ["real-fp-pre", "/Users/wujunhao/emt-fpe/emt/Fp-pre.docx"],
+  ["real-frame", "/Users/wujunhao/emt-fpe/emt/frame.docx"],
 ];
 
 const pyodide = await loadPyodide({ indexURL: join(root, "node_modules", "pyodide") + "/" });
@@ -90,7 +91,7 @@ json.dumps(result, ensure_ascii=False)
     });
   }
   const pdf = await stat(join(main, "main.pdf"));
-  if (["real-document", "real-table", "real-step", "real-fp-pre"].includes(name)) {
+  if (["real-document", "real-table", "real-step", "real-fp-pre", "real-frame"].includes(name)) {
     const pages = Number(
       execFileSync(nativePython, ["-c", "import pymupdf,sys; print(len(pymupdf.open(sys.argv[1])))", join(main, "main.pdf")], {
         encoding: "utf8",
