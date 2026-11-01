@@ -1619,8 +1619,8 @@ class Converter:
             if kinds=={('none',0)} or not grid: return f' \\noalign{{{brk}}}' if brk and 0<r<len(layout) else ''
             if len(kinds)==1:
                 v,w=kinds.pop(); h=f'{w/8:g}bp'
-                if v=='double': return f' \\noalign{{\\hrule height{h}\\vskip{h}\\hrule height{h}{brk}}}'
-                return f' \\noalign{{\\hrule height{h}{brk}}}'
+                if v=='double': return ' \\hline\\hline'
+                return ' \\hline'
             ranges=[]
             for k in range(len(grid)):
                 if cols[k][0]=='none': continue
