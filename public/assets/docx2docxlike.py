@@ -1766,7 +1766,17 @@ class Converter:
                 lat,asi=self.fonts(src.find(q('rFonts'))); nlat=nlat or lat; nasi=nasi or asi
         used=set(self.fonts_used)|({(nlat,False)} if nlat else set())|({(nasi,True)} if nasi else set())
         register={}
-        def opts(m):
+        lines.extend([
+            r'\ifdefined\directlua',
+            r'\directlua{luaotfload.add_fallback("docxlike-latin-serif", {"texgyretermes-regular.otf:mode=node;"});'
+            r' luaotfload.add_fallback("docxlike-latin-sans", {"texgyreheros-regular.otf:mode=node;"})}',
+            r'\newcommand\DocxLikeFallbackSerif{RawFeature={fallback=docxlike-latin-serif},}',
+            r'\newcommand\DocxLikeFallbackSans{RawFeature={fallback=docxlike-latin-sans},}',
+            r'\else',
+            r'\newcommand\DocxLikeFallbackSerif{}',
+            r'\newcommand\DocxLikeFallbackSans{}',
+            r'\fi'])
+        def opts(m,asian=False,name=''):
             # A system-font entry keeps the Word family name and omits Path, so
             # fontspec resolves the installed font instead of a bundled file.
             # Word prints quotes and hyphens as typed; fontspec's TeX ligatures
@@ -1776,6 +1786,9 @@ class Converter:
             if 'index' in m: parts.append(f'FontIndex={m["index"]}')
             parts += [f'{k}={{{m[f]}}}' for f,k in (('bold','BoldFont'),('italic','ItalicFont'),('bolditalic','BoldItalicFont')) if f in m]
             parts += ['Kerning=Off','Ligatures=TeXOff']
+            key=(name+' '+str(m.get('file',''))).lower()
+            sans=any(t in key for t in ('hei','yahei','dengxian','等线','黑体','arial','sans'))
+            parts.append(r'\DocxLikeFallbackSans' if sans else r'\DocxLikeFallbackSerif')
             return '['+','.join(parts)+']'
         for name,asian in sorted(used,key=lambda t:(t[1],t[0])):
             m=self.font_map.get(name)
@@ -1789,14 +1802,14 @@ class Converter:
                 self.rep.add(f'East Asian font {name} has no CJK glyphs (SimSun used)'); m=fallback
             spec=m.get('file') or name
             if not asian:
-                if name==nlat: lines.append(r'\setmainfont{'+spec+'}'+opts(m)); register[name]=r'\rmfamily'
+                if name==nlat: lines.append(r'\setmainfont{'+spec+'}'+opts(m,False,name)); register[name]=r'\rmfamily'
                 else:
-                    n+=1; cs=f'\\DocxLatin{chr(64+n)}'; lines.append(r'\newfontfamily'+cs+'{'+spec+'}'+opts(m)); register[name]=cs
+                    n+=1; cs=f'\\DocxLatin{chr(64+n)}'; lines.append(r'\newfontfamily'+cs+'{'+spec+'}'+opts(m,False,name)); register[name]=cs
             else:
                 if name==nasi:
-                    lines.append(r'\setmainjfont{'+spec+'}'+opts(m)); register.setdefault(name,r'\mcfamily')
+                    lines.append(r'\setmainjfont{'+spec+'}'+opts(m,True,name)); register.setdefault(name,r'\mcfamily')
                 elif name not in register:
-                    n+=1; cs=f'\\DocxAsian{chr(64+n)}'; lines.append(r'\newjfontfamily'+cs+'{'+spec+'}'+opts(m)); register[name]=cs
+                    n+=1; cs=f'\\DocxAsian{chr(64+n)}'; lines.append(r'\newjfontfamily'+cs+'{'+spec+'}'+opts(m,True,name)); register[name]=cs
         for name,cs in register.items():
             lines.append(r'\ExplSyntaxOn\docxlike_font_gset:nn{'+name.replace(' ','~')+'}{'+cs+r'}\ExplSyntaxOff')
         return lines

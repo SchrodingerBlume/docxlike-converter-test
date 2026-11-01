@@ -91,6 +91,10 @@ json.dumps(result, ensure_ascii=False)
     });
   }
   const pdf = await stat(join(main, "main.pdf"));
+  if (name === "real-fp-pre") {
+    const log = await readFile(join(main, "main.log"), "utf8");
+    if (log.includes("There is no ô")) throw new Error("missing ô glyph survived the fallback");
+  }
   if (["real-document", "real-table", "real-step", "real-fp-pre", "real-frame"].includes(name)) {
     const pages = Number(
       execFileSync(nativePython, ["-c", "import pymupdf,sys; print(len(pymupdf.open(sys.argv[1])))", join(main, "main.pdf")], {
@@ -157,7 +161,9 @@ json.dumps(result, ensure_ascii=False)
   const tex = await readFile(join(unpacked, "main.tex"), "utf8");
   if (!tex.includes("\\setmainfont{Times New Roman}[")) throw new Error("missing original Times New Roman");
   if (!tex.includes("\\setmainjfont{SimSun}[")) throw new Error("missing original SimSun");
-  if (/texgyre|Fandol/.test(tex)) throw new Error("system mode still contains substitute fonts");
+  if (/\\setmainfont\{texgyre|\\setmainjfont\{Fandol|\\newfontfamily\\DocxLatin[^}]*\{texgyre|\\newjfontfamily\\DocxAsian[^}]*\{Fandol/.test(tex)) {
+    throw new Error("system mode still uses substitute main fonts");
+  }
   for (const iteration of [1, 2]) {
     execFileSync("lualatex", ["-interaction=nonstopmode", "-halt-on-error", "main.tex"], {
       cwd: unpacked,
