@@ -29,6 +29,7 @@ const samples = [
     "real-table",
     "/Users/wujunhao/emt-fpe/emt/A Graph Neural Network and Probabilistic Framework for Modeling EMT Dynamics in Single.docx",
   ],
+  ["narrow-table", join(docxlike, "build/gap3-inputs-v1/gap-longtable-15.docx")],
   ["real-step", "/Users/wujunhao/emt-fpe/emt/步骤1.docx"],
   ["real-fp-pre", "/Users/wujunhao/emt-fpe/emt/Fp-pre.docx"],
   ["real-frame", "/Users/wujunhao/emt-fpe/emt/frame.docx"],
@@ -100,6 +101,16 @@ json.dumps(result, ensure_ascii=False)
     const log = await readFile(join(main, "main.log"), "utf8");
     const missing = name === "real-fp-pre" ? "There is no ô" : "Missing character";
     if (log.includes(missing)) throw new Error(`${name} still has missing glyphs`);
+  }
+  if (name === "narrow-table") {
+    const width = Number(execFileSync(nativePython, ["-c", `
+import pymupdf, sys
+page = pymupdf.open(sys.argv[1])[0]
+print(max((x["rect"].width for x in page.get_drawings()
+           if x["items"] and x["items"][0][0] == "l" and x["rect"].width > x["rect"].height), default=0))
+`, join(main, "main.pdf")], { encoding: "utf8" }).trim());
+    if (!(200 < width && width < 380)) throw new Error(`narrow table rule width ${width}bp is not table-width`);
+    console.log(`PASS narrow table rule width: ${width.toFixed(1)}bp`);
   }
   if (["real-document", "real-table", "real-step", "real-fp-pre", "real-frame"].includes(name)) {
     const pages = Number(
